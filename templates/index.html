@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados del Árbol de Decisiones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resultados del Árbol de Decisiones</h1>
+    <table>
+        <tr>
+            <th>Edad</th>
+            <th>Salario</th>
+            <th>Departamento Predicho</th>
+        </tr>
+        {% for i in range(resultados_len) %}
+        <tr>
+            <td>{{ sample_data[i][0] }}</td>
+            <td>{{ sample_data[i][1] }}</td>
+            <td>{{ resultados[i] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
+

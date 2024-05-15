@@ -1,0 +1,64 @@
+from flask import Flask, render_template, request
+import pandas as pd
+import mysql.connector
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+app = Flask(__name__)
+
+# Configuración de la base de datos MySQL
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '12345678',
+    'database': 'lab09'
+}
+
+def get_data_from_db():
+    conn = mysql.connector.connect(**db_config)
+    query = """
+        SELECT c.id_cliente, c.nombre_cliente, c.celular_cliente, c.correo_cliente,
+               COUNT(al.id_alquiler_libro) AS num_alquileres,
+               COUNT(vl.id_venta_libro) AS num_compras
+        FROM clientes c
+        LEFT JOIN alquileres_libros al ON c.id_cliente = al.id_cliente
+        LEFT JOIN ventas_libros vl ON c.id_cliente = vl.id_cliente
+        GROUP BY c.id_cliente
+    """
+    data = pd.read_sql_query(query, conn)
+    conn.close()
+    
+    # Clasificar comportamiento (etiqueta 'comportamiento')
+    data['comportamiento'] = data.apply(lambda row: 'A' if row['num_alquileres'] > row['num_compras'] else 'C', axis=1)
+    
+    return data
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        num_alquileres = int(request.form['num_alquileres'])
+        num_compras = int(request.form['num_compras'])
+        
+        # Realizar predicción: Entrenar el modelo si no está entrenado
+        data = get_data_from_db()
+        X = data[['num_alquileres', 'num_compras']]
+        y = data['comportamiento']
+        
+        # Dividir datos en conjuntos de entrenamiento y prueba
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Entrenar el modelo de árbol de decisiones si no está entrenado
+        clf = DecisionTreeClassifier(random_state=42)
+        clf.fit(X_train, y_train)
+        
+        # Hacer la predicción
+        prediction = clf.predict([[num_alquileres, num_compras]])
+        
+        return render_template('index.html', prediction=prediction[0])
+    
+    # Mostrar la página principal con el formulario
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
